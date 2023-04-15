@@ -4,9 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from colorama import init, Fore, Style
 import smtplib
 
-# function to run nuclei scan for a single URL
-
-print(Fore.RED + """                                                                                                                                                                                             
+print(Fore.RED + """
 ###########################################################
            #-------) Web crawler pro (---------#
                     Code By Dharsun R J 
@@ -25,29 +23,21 @@ headers = input(Fore.YELLOW + "Enter file name that contains required headers = 
 print("")
 print(Fore.GREEN + "Initiating Scanning..." + Style.RESET_ALL)
 print("")
-# function to run nuclei scan for a single URL
-def run_nuclei(url):
-    #cmd = f"nuclei -H {headers} -u {url.strip()} -t nuclei-templates -p http://127.0.0.1:8080 -silent"
-    cmd = f"nuclei -H {headers} -u {url.strip()} -t nuclei-templates -silent"
-    output = []
-    with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
-        for line in p.stdout:
-            with open('Detailed-Nuclei-Report.txt', 'a') as f:
-                f.write(f"{url.strip()} >> {line}\n")
-            if any(word in line.lower() for word in ['critical', 'high', 'medium', 'low']) and "info" not in line.lower():
-                output.append(line.strip())
-                # save matched output to file immediately
-                with open('Nuclei-results.txt', 'a') as f:
-                    f.write(f"{line}")
 
+cmd = f"nuclei -H {headers} -l " + Targets + " -t nuclei-templates -silent"
+with subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True, shell=True) as p:
+    for line in p.stdout:
+        print(line, end="")
+        fd = open("Detailed-Nuclei-Report.txt", 'a')
+        txt = line + '\n'
+        fd.write(txt)
+        fd.close()
+        if any(word in line.lower() for word in ['critical', 'high', 'medium']):
+            fd = open("Nuclei-results.txt", 'a')
+            txt = line + '\n'
+            fd.write(txt)
+            fd.close()
 
-# read URLs from file
-with open(Targets, 'r') as f:
-    urls = f.readlines()
-
-# create thread pool and run nuclei scans for all URLs
-with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-    executor.map(run_nuclei, urls)
 print(Fore.GREEN + "Completed..." + Style.RESET_ALL)
 sender_email = "ddrish43@gmail.com"
 receiver_email = "youcanttextme@gmail.com"
